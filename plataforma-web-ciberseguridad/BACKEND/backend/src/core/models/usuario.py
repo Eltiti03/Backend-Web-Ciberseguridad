@@ -13,6 +13,7 @@ class Usuario(models.Model):
     fecha_registro = models.DateTimeField(auto_now_add=True)
     es_administrador = models.BooleanField( null=True, blank=True)
     activo = models.BooleanField(default=True)
+    verificado = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'usuario'

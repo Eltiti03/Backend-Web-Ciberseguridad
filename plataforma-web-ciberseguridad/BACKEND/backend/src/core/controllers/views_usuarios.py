@@ -9,22 +9,166 @@ from rest_framework.response import Response
 from rest_framework import status
 from ..services.usuarios.usuario_service import RegistroUsuarioSerializer, obtener_usuarios_activos
 from ..services.usuarios.login_service import login_usuario
+from ..services.usuarios.codigo_service import generar_codigo_verificacion
+from ..services.usuarios.email_service import enviar_codigo_verificacion
+from ..models import Codigo
+from django.utils import timezone
+from django.conf import settings
+from datetime import timedelta
+from django.contrib.auth.hashers import make_password
+
 
 @api_view(["POST"])
 def registro_usuario(request):
     serializer = RegistroUsuarioSerializer(data=request.data)
+
     if serializer.is_valid():
         usuario = serializer.save()
+
+        codigo = generar_codigo_verificacion()
+
+        Codigo.objects.create(
+            usuario=usuario,
+            content=codigo
+        )
+
+        enviar_codigo_verificacion(usuario.email, codigo)
+
         return Response(
             {
-                "message": "Usuario registrado correctamente",
-                "usuario_id": str(usuario.usuario_id),  # convertir a string
-                "email": usuario.email,
-                "nombre": usuario.nombre
+                "success": True,
+                "result": {
+                    "message": "Usuario registrado. Verifica tu correo.",
+                    "usuario_id": str(usuario.usuario_id),
+                    "email": usuario.email
+                }
             },
             status=status.HTTP_201_CREATED
         )
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response(
+        {
+            "success": False,
+            "message": serializer.errors
+        },
+        status=status.HTTP_400_BAD_REQUEST
+    )
+
+@api_view(["POST"])
+def verificar_codigo(request):
+    email = request.data.get("email")
+    codigo = request.data.get("codigo")
+    tipo = request.data.get("tipo")
+
+    if not email or not codigo or not tipo:
+        return Response(
+            {
+                "success": False,
+                "message": "email, codigo y tipo son obligatorios"
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        usuario = Usuario.objects.get(email=email)
+    except Usuario.DoesNotExist:
+        return Response(
+            {
+                "success": False,
+                "message": "Usuario no encontrado"
+            },
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    codigo_obj = Codigo.objects.filter(
+        usuario=usuario,
+        content=codigo,
+        tipo=tipo,
+        used=False
+    ).order_by("-fecha_creacion").first()
+
+    if not codigo_obj:
+        return Response(
+            {
+                "success": False,
+                "message": "Código inválido o ya usado"
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    codigo_obj.used = True
+    codigo_obj.save()
+
+    # 🔹 Solo si es verificación activas usuario
+    if tipo == "VERIFICACION":
+        usuario.verificado = True
+        usuario.save()
+
+    return Response(
+        {
+            "success": True,
+            "result": "Código verificado correctamente"
+        },
+        status=status.HTTP_200_OK
+    )
+
+@api_view(["POST"])
+def solicitar_codigo(request):
+    email = request.data.get("email")
+    tipo = request.data.get("tipo")  # VERIFICACION o RECUPERACION
+
+    if not email or not tipo:
+        return Response(
+            {
+                "success": False,
+                "message": "email y tipo son obligatorios"
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    if tipo not in ["VERIFICACION", "RECUPERACION"]:
+        return Response(
+            {
+                "success": False,
+                "message": "Tipo inválido"
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        usuario = Usuario.objects.get(email=email)
+    except Usuario.DoesNotExist:
+        return Response(
+            {
+                "success": False,
+                "message": "Usuario no encontrado"
+            },
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    Codigo.objects.filter(
+        usuario=usuario,
+        tipo=tipo,
+        used=False
+    ).update(used=True)
+
+    codigo = generar_codigo_verificacion()
+
+    Codigo.objects.create(
+        usuario=usuario,
+        content=codigo,
+        tipo=tipo
+    )
+
+    enviar_codigo_verificacion(usuario.email, codigo)
+
+    return Response(
+        {
+            "success": True,
+            "result": f"Código de {tipo.lower()} enviado"
+        },
+        status=status.HTTP_200_OK
+    )
 
 @api_view(["POST"])
 def login(request):
@@ -117,6 +261,56 @@ def editar_nombre_usuario(request, usuario_id):
                 "usuario_id": str(usuario.usuario_id),
                 "nombre": usuario.nombre
             }
+        },
+        status=status.HTTP_200_OK
+    )
+
+@api_view(["POST"])
+def cambiar_password(request):
+    email = request.data.get("email")
+    nueva_password = request.data.get("password")
+
+    if not email or not nueva_password:
+        return Response(
+            {
+                "success": False,
+                "message": "email y password son obligatorios"
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        usuario = Usuario.objects.get(email=email)
+    except Usuario.DoesNotExist:
+        return Response(
+            {
+                "success": False,
+                "message": "Usuario no encontrado"
+            },
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    codigo = Codigo.objects.filter(
+        usuario=usuario,
+        tipo="RECUPERACION"
+    ).order_by("-fecha_creacion").first()
+
+    if not codigo or not codigo.used:
+        return Response(
+            {
+                "success": False,
+                "message": "Debes verificar el código de recuperación primero"
+            },
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    # Cambiar contraseña
+    usuario.password_hash = make_password(nueva_password)
+    usuario.save()
+    return Response(
+        {
+            "success": True,
+            "result": "Contraseña actualizada correctamente"
         },
         status=status.HTTP_200_OK
     )

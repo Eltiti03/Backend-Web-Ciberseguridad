@@ -11,3 +11,4 @@ from .pregunta import Pregunta
 from .opcion_respuesta import OpcionRespuesta
 from .intento_cuestionario import IntentoCuestionario
 from .respuesta_usuario import RespuestaUsuario
+from .codigo import Codigo
