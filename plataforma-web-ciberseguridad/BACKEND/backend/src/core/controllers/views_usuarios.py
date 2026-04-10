@@ -16,7 +16,32 @@ from django.utils import timezone
 from django.conf import settings
 from datetime import timedelta
 from django.contrib.auth.hashers import make_password
+from django.contrib.auth import authenticate, login
+from django.http import JsonResponse
+import json
 
+@api_view(["GET"])
+def me(request):
+    print("USER:", request.user)
+    print("AUTH:", request.auth)
+    print("COOKIES:", request.COOKIES)
+
+    if not request.user or not request.user.is_authenticated:
+        return Response({"authenticated": False}, status=401)
+
+    return Response({
+        "authenticated": True,
+        "usuario": {
+            "nombre": request.user.nombre,
+            "email": request.user.email
+        }
+    })
+
+@api_view(["POST"])
+def logout(request):
+    response = Response({"message": "Sesión cerrada"}, status=200)
+    response.delete_cookie("auth_token", domain="localhost")
+    return response
 
 @api_view(["POST"])
 def registro_usuario(request):
@@ -174,9 +199,8 @@ def solicitar_codigo(request):
 def login(request):
     usuario, token = login_usuario(request.data)
 
-    return Response(
+    response = Response(
         {
-            "token": token,
             "usuario": {
                 "id": str(usuario.usuario_id),
                 "email": usuario.email,
@@ -186,6 +210,17 @@ def login(request):
         },
         status=status.HTTP_200_OK
     )
+
+    response.set_cookie(
+        key="auth_token",
+        value=token,
+        httponly=True,  
+        secure=False,       
+        samesite="Lax",  
+        max_age=60 * 60 * 24 
+    )
+
+    return response
 
 @api_view(['PATCH'])
 def eliminar_usuario(request, usuario_id):
