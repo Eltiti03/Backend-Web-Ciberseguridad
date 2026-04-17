@@ -202,6 +202,59 @@ def obtener_publicaciones_usuario(request, usuario_id):
         status=status.HTTP_200_OK
     )
 
+@api_view(['GET'])
+def obtener_publicaciones(request):
+    publicaciones = Publicacion.objects.all()
+
+    # 🔎 Filtros opcionales
+    titulo = request.GET.get("titulo")
+    usuario_id = request.GET.get("usuario_id")
+
+    if titulo:
+        publicaciones = publicaciones.filter(titulo__icontains=titulo)
+
+    if usuario_id:
+        publicaciones = publicaciones.filter(usuario__usuario_id=usuario_id)
+
+    data = [
+        {
+            "publicacion_id": str(p.publicacion_id),
+            "titulo": p.titulo,
+            "contenido": p.contenido,
+            "fecha_creacion": p.fecha_creacion,
+            "usuario": str(p.usuario.usuario_id)
+        }
+        for p in publicaciones
+    ]
+
+    return Response(
+        {"success": True, "result": data},
+        status=status.HTTP_200_OK
+    )
+
+@api_view(['GET'])
+def obtener_publicacion(request, publicacion_id):
+    try:
+        p = Publicacion.objects.get(publicacion_id=publicacion_id)
+    except Publicacion.DoesNotExist:
+        return Response(
+            {"success": False, "message": "Publicación no encontrada"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    data = {
+        "publicacion_id": str(p.publicacion_id),
+        "titulo": p.titulo,
+        "contenido": p.contenido,
+        "fecha_creacion": p.fecha_creacion,
+        "usuario": str(p.usuario.usuario_id)
+    }
+
+    return Response(
+        {"success": True, "result": data},
+        status=status.HTTP_200_OK
+    )
+
 @api_view(['POST'])
 def crear_comentario(request):
     usuario_id = request.data.get("usuario_id")
