@@ -7,7 +7,7 @@ from ..models.usuario import Usuario
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from ..services.usuarios.usuario_service import RegistroUsuarioSerializer, obtener_usuarios_activos
+from ..services.usuarios.usuario_service import RegistroUsuarioSerializer, get_all_usuarios, get_usuarios_activos, get_all_usuarios, get_usuarios_activos
 from ..services.usuarios.login_service import login_usuario
 from ..services.usuarios.codigo_service import generar_codigo_verificacion
 from ..services.usuarios.email_service import enviar_codigo_verificacion
@@ -33,7 +33,8 @@ def me(request):
         "authenticated": True,
         "usuario": {
             "nombre": request.user.nombre,
-            "email": request.user.email
+            "email": request.user.email,
+            "es_administrador": request.user.es_administrador
         }
     })
 
@@ -232,6 +233,8 @@ def eliminar_usuario(request, usuario_id):
             status=status.HTTP_404_NOT_FOUND
         )
 
+    usuario.nombre = "Usuario eliminado"
+    usuario.email = f"eliminado_{usuario.usuario_id}@deleted.com" 
     usuario.activo = False
     usuario.save()
 
@@ -241,7 +244,27 @@ def eliminar_usuario(request, usuario_id):
     )
 @api_view(['GET'])
 def obtener_usuarios(request):
-    usuarios = obtener_usuarios_activos()
+    usuarios = get_all_usuarios()
+
+    data = [
+        {
+            "id": str(u.usuario_id),
+            "email": u.email,
+            "nombre": u.nombre,
+            "es_administrador": u.es_administrador,
+            "activo": u.activo
+        }
+        for u in usuarios
+    ]
+
+    return Response(
+        {"success": True, "result": data},
+        status=status.HTTP_200_OK
+    )
+
+@api_view(['GET'])
+def obtener_usuarios_activos(request):
+    usuarios = get_usuarios_activos()
 
     data = [
         {
@@ -260,14 +283,16 @@ def obtener_usuarios(request):
     )
 
 @api_view(['PATCH'])
-def editar_nombre_usuario(request, usuario_id):
+def editar_usuario(request, usuario_id):
     nombre = request.data.get('nombre')
+    es_administrador = request.data.get('es_administrador')
 
-    if not nombre:
+    # Ahora ambos campos son opcionales, pero al menos uno debe venir
+    if nombre is None and es_administrador is None:
         return Response(
             {
                 "success": False,
-                "message": "El campo 'nombre' es obligatorio"
+                "message": "Debes enviar al menos 'nombre' o 'es_administrador'"
             },
             status=status.HTTP_400_BAD_REQUEST
         )
@@ -286,7 +311,12 @@ def editar_nombre_usuario(request, usuario_id):
             status=status.HTTP_404_NOT_FOUND
         )
 
-    usuario.nombre = nombre
+    # Solo actualiza el campo si viene en el request
+    if nombre is not None:
+        usuario.nombre = nombre
+    if es_administrador is not None:
+        usuario.es_administrador = es_administrador
+
     usuario.save()
 
     return Response(
@@ -294,7 +324,8 @@ def editar_nombre_usuario(request, usuario_id):
             "success": True,
             "result": {
                 "usuario_id": str(usuario.usuario_id),
-                "nombre": usuario.nombre
+                "nombre": usuario.nombre,
+                "es_administrador": usuario.es_administrador
             }
         },
         status=status.HTTP_200_OK

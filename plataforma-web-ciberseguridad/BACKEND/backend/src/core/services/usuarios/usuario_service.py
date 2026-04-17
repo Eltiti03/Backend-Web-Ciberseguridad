@@ -21,7 +21,8 @@ def eliminar_usuario(usuario_objetivo, usuario_solicitante):
 
     return usuario_objetivo
 
-def obtener_usuarios_activos():
+def get_usuarios_activos():
+    return Usuario.objects.filter(activo=True)
 
-    usuario = Usuario.objects.filter(activo=True)
-    return usuario
+def get_all_usuarios():
+    return Usuario.objects.all()
