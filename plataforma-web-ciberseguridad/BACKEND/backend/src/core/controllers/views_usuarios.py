@@ -30,13 +30,14 @@ def me(request):
         return Response({"authenticated": False}, status=401)
 
     return Response({
-        "authenticated": True,
-        "usuario": {
-            "nombre": request.user.nombre,
-            "email": request.user.email,
-            "es_administrador": request.user.es_administrador
-        }
-    })
+    "authenticated": True,
+    "usuario": {
+        "id": str(request.user.usuario_id),
+        "nombre": request.user.nombre,
+        "email": request.user.email,
+        "es_administrador": request.user.es_administrador
+    }
+})
 
 @api_view(["POST"])
 def logout(request):
