@@ -15,23 +15,17 @@ def crear_cuestionario(request):
 
     if not titulo:
         return Response(
-            {
-                "success": False,
-                "message": "El campo 'titulo' es obligatorio"
-            },
+            {"success": False, "message": "El campo 'titulo' es obligatorio"},
             status=status.HTTP_400_BAD_REQUEST
         )
-    
+
     try:
         tiempo_limite_minutos = int(tiempo_limite_minutos)
         if tiempo_limite_minutos < 0:
             raise ValueError
     except ValueError:
         return Response(
-            {
-                "success": False,
-                "message": "El tiempo_limite_minutos debe ser mayor o igual a 0"
-            },
+            {"success": False, "message": "El tiempo_limite_minutos debe ser mayor o igual a 0"},
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -46,10 +40,7 @@ def crear_cuestionario(request):
             es_activo = False
         else:
             return Response(
-                {
-                    "success": False,
-                    "message": "El campo 'es_activo' debe ser true o false"
-                },
+                {"success": False, "message": "El campo 'es_activo' debe ser true o false"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -74,9 +65,65 @@ def crear_cuestionario(request):
         status=status.HTTP_201_CREATED
     )
 
+
+@api_view(['PATCH'])
+def editar_cuestionario(request, cuestionario_id):
+    try:
+        cuestionario = Cuestionario.objects.get(cuestionario_id=cuestionario_id)
+    except Cuestionario.DoesNotExist:
+        return Response(
+            {"success": False, "message": "Cuestionario no encontrado"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    titulo = request.data.get("titulo")
+    descripcion = request.data.get("descripcion")
+    tiempo_limite_minutos = request.data.get("tiempo_limite_minutos")
+    es_activo = request.data.get("es_activo")
+
+    if titulo is not None:
+        cuestionario.titulo = titulo
+    if descripcion is not None:
+        cuestionario.descripcion = descripcion
+    if tiempo_limite_minutos is not None:
+        try:
+            tiempo_limite_minutos = int(tiempo_limite_minutos)
+            if tiempo_limite_minutos < 0:
+                raise ValueError
+            cuestionario.tiempo_limite_minutos = tiempo_limite_minutos
+        except ValueError:
+            return Response(
+                {"success": False, "message": "El tiempo_limite_minutos debe ser mayor o igual a 0"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    if es_activo is not None:
+        if isinstance(es_activo, bool):
+            cuestionario.es_activo = es_activo
+        elif str(es_activo).lower() == "true":
+            cuestionario.es_activo = True
+        elif str(es_activo).lower() == "false":
+            cuestionario.es_activo = False
+
+    cuestionario.save()
+
+    return Response(
+        {
+            "success": True,
+            "message": "Cuestionario actualizado correctamente",
+            "result": {
+                "cuestionario_id": str(cuestionario.cuestionario_id),
+                "titulo": cuestionario.titulo,
+                "descripcion": cuestionario.descripcion,
+                "es_activo": cuestionario.es_activo,
+                "tiempo_limite_minutos": cuestionario.tiempo_limite_minutos
+            }
+        },
+        status=status.HTTP_200_OK
+    )
+
+
 @api_view(['GET'])
 def obtener_cuestionarios(request):
-
     cuestionarios = Cuestionario.objects.prefetch_related(
         Prefetch(
             "preguntas",
@@ -85,21 +132,17 @@ def obtener_cuestionarios(request):
     )
 
     data = []
-
     for c in cuestionarios:
         preguntas_data = []
-
         for p in c.preguntas.all():
             opciones_data = [
                 {
                     "opcion_id": str(o.opcion_id),
                     "texto": o.texto,
-                    # ⚠️ si es examen real NO enviar es_correcta
                     "es_correcta": o.es_correcta
                 }
                 for o in p.opciones.all()
             ]
-
             preguntas_data.append({
                 "pregunta_id": str(p.pregunta_id),
                 "enunciado": p.enunciado,
@@ -116,38 +159,25 @@ def obtener_cuestionarios(request):
             "preguntas": preguntas_data
         })
 
-    return Response(
-        {"success": True, "result": data},
-        status=status.HTTP_200_OK
-    )
+    return Response({"success": True, "result": data}, status=status.HTTP_200_OK)
+
 
 @api_view(['DELETE'])
 def eliminar_cuestionario(request, cuestionario_id):
     try:
-        cuestionario = Cuestionario.objects.get(
-            cuestionario_id=cuestionario_id,
-        )
+        cuestionario = Cuestionario.objects.get(cuestionario_id=cuestionario_id)
     except Cuestionario.DoesNotExist:
         return Response(
-            {
-                "success": False,
-                "message": "Cuestionario no encontrado"
-            },
+            {"success": False, "message": "Cuestionario no encontrado"},
             status=status.HTTP_404_NOT_FOUND
         )
 
     cuestionario.delete()
-
     return Response(
-        {
-            "success": True,
-            "result": "Cuestionario eliminado correctamente"
-        },
+        {"success": True, "result": "Cuestionario eliminado correctamente"},
         status=status.HTTP_200_OK
     )
 
-
-#Preguntas
 
 @api_view(['POST'])
 def crear_pregunta(request):
@@ -157,10 +187,7 @@ def crear_pregunta(request):
 
     if not enunciado or not cuestionario_id:
         return Response(
-            {
-                "success": False,
-                "message": "enunciado y cuestionario_id son obligatorios"
-            },
+            {"success": False, "message": "enunciado y cuestionario_id son obligatorios"},
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -168,10 +195,7 @@ def crear_pregunta(request):
         cuestionario = Cuestionario.objects.get(cuestionario_id=cuestionario_id)
     except Cuestionario.DoesNotExist:
         return Response(
-            {
-                "success": False,
-                "message": "Cuestionario no encontrado"
-            },
+            {"success": False, "message": "Cuestionario no encontrado"},
             status=status.HTTP_404_NOT_FOUND
         )
 
@@ -185,12 +209,11 @@ def crear_pregunta(request):
         {
             "success": True,
             "message": "Pregunta creada correctamente",
-            "result": {
-                "pregunta_id": pregunta.pregunta_id
-            }
+            "result": {"pregunta_id": str(pregunta.pregunta_id)}
         },
         status=status.HTTP_201_CREATED
     )
+
 
 @api_view(['PATCH'])
 def editar_pregunta(request, pregunta_id):
@@ -207,19 +230,11 @@ def editar_pregunta(request, pregunta_id):
 
     if enunciado is not None:
         pregunta.enunciado = enunciado
-
     if puntos is not None:
         pregunta.puntos = puntos
 
     pregunta.save()
-
-    return Response(
-        {
-            "success": True,
-            "message": "Pregunta actualizada correctamente"
-        },
-        status=status.HTTP_200_OK
-    )
+    return Response({"success": True, "message": "Pregunta actualizada correctamente"}, status=status.HTTP_200_OK)
 
 
 @api_view(['DELETE'])
@@ -233,14 +248,7 @@ def eliminar_pregunta(request, pregunta_id):
         )
 
     pregunta.delete()
-
-    return Response(
-        {
-            "success": True,
-            "message": "Pregunta eliminada correctamente"
-        },
-        status=status.HTTP_200_OK
-    )
+    return Response({"success": True, "message": "Pregunta eliminada correctamente"}, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])
@@ -249,38 +257,21 @@ def obtener_preguntas_cuestionario(request, cuestionario_id):
         cuestionario = Cuestionario.objects.get(cuestionario_id=cuestionario_id)
     except Cuestionario.DoesNotExist:
         return Response(
-            {
-                "success": False,
-                "message": "Cuestionario no encontrado"
-            },
+            {"success": False, "message": "Cuestionario no encontrado"},
             status=status.HTTP_404_NOT_FOUND
         )
 
-    preguntas = (
-        Pregunta.objects
-        .filter(cuestionario=cuestionario)
-        .order_by("pregunta_id")
-    )
-
-    resultado = []
-
-    for pregunta in preguntas:
-        resultado.append({
-            "pregunta_id": pregunta.pregunta_id,
-            "enunciado": pregunta.enunciado,
-            "puntos": pregunta.puntos
-        })
+    preguntas = Pregunta.objects.filter(cuestionario=cuestionario).order_by("pregunta_id")
+    resultado = [
+        {"pregunta_id": str(p.pregunta_id), "enunciado": p.enunciado, "puntos": p.puntos}
+        for p in preguntas
+    ]
 
     return Response(
-        {
-            "success": True,
-            "cuestionario_id": cuestionario_id,
-            "result": resultado
-        },
+        {"success": True, "cuestionario_id": str(cuestionario_id), "result": resultado},
         status=status.HTTP_200_OK
     )
 
-#Opcion_Respuesta
 
 @api_view(['POST'])
 def crear_opcion(request):
@@ -291,10 +282,7 @@ def crear_opcion(request):
 
     if not texto or not pregunta_id:
         return Response(
-            {
-                "success": False,
-                "message": "texto y pregunta_id son obligatorios"
-            },
+            {"success": False, "message": "texto y pregunta_id son obligatorios"},
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -302,19 +290,12 @@ def crear_opcion(request):
         pregunta = Pregunta.objects.get(pregunta_id=pregunta_id)
     except Pregunta.DoesNotExist:
         return Response(
-            {
-                "success": False,
-                "message": "Pregunta no encontrada"
-            },
+            {"success": False, "message": "Pregunta no encontrada"},
             status=status.HTTP_404_NOT_FOUND
         )
 
-    # Si se marca como correcta, desmarcar otras
     if es_correcta:
-        OpcionRespuesta.objects.filter(
-            pregunta=pregunta,
-            es_correcta=True
-        ).update(es_correcta=False)
+        OpcionRespuesta.objects.filter(pregunta=pregunta, es_correcta=True).update(es_correcta=False)
 
     opcion = OpcionRespuesta.objects.create(
         texto=texto,
@@ -327,12 +308,11 @@ def crear_opcion(request):
         {
             "success": True,
             "message": "Opción creada correctamente",
-            "result": {
-                "opcion_id": opcion.opcion_id
-            }
+            "result": {"opcion_id": str(opcion.opcion_id)}
         },
         status=status.HTTP_201_CREATED
     )
+
 
 @api_view(['PATCH'])
 def editar_opcion(request, opcion_id):
@@ -350,29 +330,17 @@ def editar_opcion(request, opcion_id):
 
     if texto is not None:
         opcion.texto = texto
-
     if retroalimentacion is not None:
         opcion.retroalimentacion = retroalimentacion
-
     if es_correcta is not None:
         if es_correcta:
-            # Desmarcar otras correctas
             OpcionRespuesta.objects.filter(
-                pregunta=opcion.pregunta,
-                es_correcta=True
+                pregunta=opcion.pregunta, es_correcta=True
             ).exclude(opcion_id=opcion_id).update(es_correcta=False)
-
         opcion.es_correcta = es_correcta
 
     opcion.save()
-
-    return Response(
-        {
-            "success": True,
-            "message": "Opción actualizada correctamente"
-        },
-        status=status.HTTP_200_OK
-    )
+    return Response({"success": True, "message": "Opción actualizada correctamente"}, status=status.HTTP_200_OK)
 
 
 @api_view(['DELETE'])
@@ -386,16 +354,8 @@ def eliminar_opcion(request, opcion_id):
         )
 
     opcion.delete()
+    return Response({"success": True, "message": "Opción eliminada correctamente"}, status=status.HTTP_200_OK)
 
-    return Response(
-        {
-            "success": True,
-            "message": "Opción eliminada correctamente"
-        },
-        status=status.HTTP_200_OK
-    )
-
-# Intento Cuestionario
 
 @api_view(['POST'])
 def iniciar_intento(request):
@@ -404,47 +364,27 @@ def iniciar_intento(request):
 
     if not usuario_id or not cuestionario_id:
         return Response(
-            {
-                "success": False,
-                "message": "usuario_id y cuestionario_id son obligatorios"
-            },
+            {"success": False, "message": "usuario_id y cuestionario_id son obligatorios"},
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    # Validar usuario
     try:
         usuario = Usuario.objects.get(usuario_id=usuario_id)
     except Usuario.DoesNotExist:
-        return Response(
-            {"success": False, "message": "Usuario no encontrado"},
-            status=status.HTTP_404_NOT_FOUND
-        )
+        return Response({"success": False, "message": "Usuario no encontrado"}, status=status.HTTP_404_NOT_FOUND)
 
-    # Validar cuestionario
     try:
         cuestionario = Cuestionario.objects.get(cuestionario_id=cuestionario_id)
     except Cuestionario.DoesNotExist:
-        return Response(
-            {"success": False, "message": "Cuestionario no encontrado"},
-            status=status.HTTP_404_NOT_FOUND
-        )
+        return Response({"success": False, "message": "Cuestionario no encontrado"}, status=status.HTTP_404_NOT_FOUND)
 
-    # Crear intento
-    intento = IntentoCuestionario.objects.create(
-        usuario=usuario,
-        cuestionario=cuestionario
-    )
+    intento = IntentoCuestionario.objects.create(usuario=usuario, cuestionario=cuestionario)
 
     return Response(
-        {
-            "success": True,
-            "message": "Intento iniciado correctamente",
-            "intento_id": intento.intento_id
-        },
+        {"success": True, "message": "Intento iniciado correctamente", "intento_id": str(intento.intento_id)},
         status=status.HTTP_201_CREATED
     )
 
-# Respuesta de Usuario
 
 @api_view(['POST'])
 def responder_pregunta(request):
@@ -454,98 +394,53 @@ def responder_pregunta(request):
 
     if not intento_id or not pregunta_id or not opcion_id:
         return Response(
-            {
-                "success": False,
-                "message": "intento_id, pregunta_id y opcion_id son obligatorios"
-            },
+            {"success": False, "message": "intento_id, pregunta_id y opcion_id son obligatorios"},
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    # Validar intento
     try:
         intento = IntentoCuestionario.objects.get(intento_id=intento_id)
     except IntentoCuestionario.DoesNotExist:
-        return Response(
-            {"success": False, "message": "Intento no encontrado"},
-            status=status.HTTP_404_NOT_FOUND
-        )
+        return Response({"success": False, "message": "Intento no encontrado"}, status=status.HTTP_404_NOT_FOUND)
 
-    # Validar pregunta
     try:
         pregunta = Pregunta.objects.get(pregunta_id=pregunta_id)
     except Pregunta.DoesNotExist:
-        return Response(
-            {"success": False, "message": "Pregunta no encontrada"},
-            status=status.HTTP_404_NOT_FOUND
-        )
+        return Response({"success": False, "message": "Pregunta no encontrada"}, status=status.HTTP_404_NOT_FOUND)
 
-    # Validar que la pregunta pertenece al cuestionario del intento
     if pregunta.cuestionario != intento.cuestionario:
         return Response(
-            {
-                "success": False,
-                "message": "La pregunta no pertenece al cuestionario del intento"
-            },
+            {"success": False, "message": "La pregunta no pertenece al cuestionario del intento"},
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    # Validar opción
     try:
         opcion = OpcionRespuesta.objects.get(opcion_id=opcion_id)
     except OpcionRespuesta.DoesNotExist:
-        return Response(
-            {"success": False, "message": "Opción no encontrada"},
-            status=status.HTTP_404_NOT_FOUND
-        )
+        return Response({"success": False, "message": "Opción no encontrada"}, status=status.HTTP_404_NOT_FOUND)
 
-    # Validar que la opción pertenece a la pregunta
     if opcion.pregunta != pregunta:
         return Response(
-            {
-                "success": False,
-                "message": "La opción no pertenece a la pregunta"
-            },
+            {"success": False, "message": "La opción no pertenece a la pregunta"},
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    # Evitar doble respuesta
-    if RespuestaUsuario.objects.filter(
-        intento=intento,
-        pregunta=pregunta
-    ).exists():
+    if RespuestaUsuario.objects.filter(intento=intento, pregunta=pregunta).exists():
         return Response(
-            {
-                "success": False,
-                "message": "Ya respondías esta pregunta en este intento"
-            },
+            {"success": False, "message": "Ya respondiste esta pregunta en este intento"},
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    # Crear respuesta
-    RespuestaUsuario.objects.create(
-        intento=intento,
-        pregunta=pregunta,
-        opcion_seleccionada=opcion
-    )
+    RespuestaUsuario.objects.create(intento=intento, pregunta=pregunta, opcion_seleccionada=opcion)
 
-    # Recalcular puntaje automáticamente
-    respuestas_correctas = RespuestaUsuario.objects.filter(
-        intento=intento,
-        opcion_seleccionada__es_correcta=True
-    )
-
-    total = respuestas_correctas.aggregate(
-        total=Sum("pregunta__puntos")
-    )["total"] or 0
+    total = RespuestaUsuario.objects.filter(
+        intento=intento, opcion_seleccionada__es_correcta=True
+    ).aggregate(total=Sum("pregunta__puntos"))["total"] or 0
 
     intento.puntaje_total = total
     intento.save()
 
     return Response(
-        {
-            "success": True,
-            "message": "Respuesta registrada correctamente",
-            "puntaje_actual": total
-        },
+        {"success": True, "message": "Respuesta registrada correctamente", "puntaje_actual": total},
         status=status.HTTP_201_CREATED
     )
