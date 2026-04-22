@@ -19,6 +19,8 @@ luego deben instalar django con el siguiente comando:
 
 ** PARA CORRER EL SERVIDOR **
 
+para activar entorno virtual dirigirse a la ruta env\Scripts\ y ejecutar .\activate.ps1 (Windows)
+
 desde la carpeta backend, ejecutar el siguiente comando:
 
 python manage.py runserver
