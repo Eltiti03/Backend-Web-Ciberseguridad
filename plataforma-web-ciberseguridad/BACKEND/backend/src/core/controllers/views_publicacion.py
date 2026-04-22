@@ -222,7 +222,12 @@ def obtener_publicaciones(request):
             "titulo": p.titulo,
             "contenido": p.contenido,
             "fecha_creacion": p.fecha_creacion,
-            "usuario": str(p.usuario.usuario_id)
+            "usuario": None if p.es_anonima else {
+                "usuario_id": str(p.usuario.usuario_id),
+                "nombre": p.usuario.nombre
+            },
+            "es_anonima": p.es_anonima,
+            "comentarios": []
         }
         for p in publicaciones
     ]
@@ -247,7 +252,12 @@ def obtener_publicacion(request, publicacion_id):
         "titulo": p.titulo,
         "contenido": p.contenido,
         "fecha_creacion": p.fecha_creacion,
-        "usuario": str(p.usuario.usuario_id)
+        "usuario": None if p.es_anonima else {
+            "usuario_id": str(p.usuario.usuario_id),
+            "nombre": p.usuario.nombre
+        },
+        "es_anonima": p.es_anonima,
+        "comentarios": list(p.comentarios.values("comentario_id", "contenido", "fecha_creacion", "usuario__usuario_id", "usuario__nombre"))
     }
 
     return Response(
