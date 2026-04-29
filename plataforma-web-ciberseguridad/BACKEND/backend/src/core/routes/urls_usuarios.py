@@ -1,6 +1,6 @@
 # src/core/routes/urls_usuarios.py
 from django.urls import path
-from ..controllers.views_usuarios import cambiar_password, editar_usuario, eliminar_usuario, health_check_view, logout, obtener_usuarios, obtener_usuarios_activos, registro_usuario, login, solicitar_codigo, verificar_codigo, me
+from ..controllers.views_usuarios import admin_crear_usuario, cambiar_password, editar_usuario, eliminar_usuario, health_check_view, logout, obtener_usuarios, obtener_usuarios_activos, registro_usuario, login, solicitar_codigo, verificar_codigo, me
 
 urlpatterns = [
     path("health/", health_check_view),
@@ -15,4 +15,5 @@ urlpatterns = [
     path('usuario/get/all/', obtener_usuarios),
     path('usuario/get/activos/', obtener_usuarios_activos),
     path('usuario/update/<uuid:usuario_id>/', editar_usuario),
+        path('usuario/admin/crear/', admin_crear_usuario)
 ]

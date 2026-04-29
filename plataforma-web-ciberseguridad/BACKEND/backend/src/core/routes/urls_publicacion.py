@@ -1,6 +1,6 @@
 from django.urls import path
 
-from ..controllers.views_publicacion import crear_comentario, crear_publicacion, editar_comentario, editar_publicacion, eliminar_comentario, eliminar_publicacion, obtener_publicacion, obtener_publicaciones, obtener_publicaciones_usuario
+from ..controllers.views_publicacion import crear_comentario, crear_publicacion, editar_comentario, editar_publicacion, eliminar_comentario, eliminar_publicacion, obtener_categorias_publicacion, obtener_publicacion, obtener_publicaciones, obtener_publicaciones_usuario
 
 urlpatterns = [
 
@@ -13,6 +13,7 @@ urlpatterns = [
     path('publicacion/comentario/crear/', crear_comentario),
     path('publicacion/comentario/editar/<uuid:comentario_id>/', editar_comentario),
     path('publicacion/comentario/eliminar/<uuid:comentario_id>/', eliminar_comentario),
+    path('publicacion/categorias/', obtener_categorias_publicacion),
 
 
 

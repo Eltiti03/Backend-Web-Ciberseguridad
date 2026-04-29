@@ -36,6 +36,38 @@ def crear_categoria_recurso(request):
         status=status.HTTP_201_CREATED
     )
 
+@api_view(['PATCH'])
+def editar_categoria_recurso(request, categoria_id):
+    try:
+        categoria = CategoriaRecurso.objects.get(categoria_id=categoria_id)
+    except CategoriaRecurso.DoesNotExist:
+        return Response(
+            {"success": False, "message": "Categoría no encontrada"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    nombre = request.data.get('nombre')
+    descripcion = request.data.get('descripcion')
+
+    if nombre is not None:
+        categoria.nombre = nombre
+    if descripcion is not None:
+        categoria.descripcion = descripcion
+
+    categoria.save()
+
+    return Response(
+        {
+            "success": True,
+            "result": {
+                "categoria_id": str(categoria.categoria_id),
+                "nombre": categoria.nombre,
+                "descripcion": categoria.descripcion
+            }
+        },
+        status=status.HTTP_200_OK
+    )
+
 @api_view(['DELETE'])
 def eliminar_categoria_recurso(request, categoria_id):
     try:

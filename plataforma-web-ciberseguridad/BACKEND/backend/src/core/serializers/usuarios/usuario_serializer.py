@@ -41,3 +41,5 @@ class RegistroUsuarioSerializer(serializers.Serializer):
         )
 
         return usuario
+    
+    

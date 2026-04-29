@@ -2,10 +2,99 @@ from django.core.mail import send_mail
 from django.conf import settings
 
 def enviar_codigo_verificacion(destinatario, codigo):
+    html = f"""
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+      <title>Código de verificación</title>
+    </head>
+    <body style="margin:0; padding:0; background-color:#0f172a; font-family:'Segoe UI', Arial, sans-serif;">
+
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#0f172a; padding: 40px 0;">
+        <tr>
+          <td align="center">
+            <table width="520" cellpadding="0" cellspacing="0" style="background-color:#1e293b; border-radius:16px; overflow:hidden; border: 1px solid #334155;">
+
+              <!-- Header -->
+              <tr>
+                <td style="background: linear-gradient(135deg, #1d4ed8, #0ea5e9); padding: 36px 40px; text-align:center;">
+                  <p style="margin:0 0 8px 0; font-size:28px;">🛡️</p>
+                  <h1 style="margin:0; color:#ffffff; font-size:22px; font-weight:700; letter-spacing:0.5px;">
+                    CyberGuard
+                  </h1>
+                  <p style="margin:6px 0 0 0; color:#bfdbfe; font-size:13px;">
+                    Plataforma de Ciberseguridad
+                  </p>
+                </td>
+              </tr>
+
+              <!-- Body -->
+              <tr>
+                <td style="padding: 36px 40px;">
+                  <p style="margin:0 0 12px 0; color:#94a3b8; font-size:13px; text-transform:uppercase; letter-spacing:1px; font-weight:600;">
+                    Verificación de identidad
+                  </p>
+                  <h2 style="margin:0 0 16px 0; color:#f1f5f9; font-size:20px; font-weight:600;">
+                    Este es tu código
+                  </h2>
+                  <p style="margin:0 0 28px 0; color:#94a3b8; font-size:14px; line-height:1.6;">
+                    Usa el siguiente código para completar tu verificación. 
+                    Este código expira en <strong style="color:#f1f5f9;">10 minutos</strong>.
+                  </p>
+
+                  <!-- Código -->
+                  <div style="background-color:#0f172a; border: 1px solid #334155; border-radius:12px; padding: 28px; text-align:center; margin-bottom:28px;">
+                    <p style="margin:0 0 8px 0; color:#64748b; font-size:12px; letter-spacing:1px; text-transform:uppercase;">
+                      Código de acceso
+                    </p>
+                    <p style="margin:0; font-size:42px; font-weight:800; letter-spacing:12px; color:#38bdf8; font-family:'Courier New', monospace;">
+                      {codigo}
+                    </p>
+                  </div>
+
+                  <!-- Advertencia -->
+                  <div style="background-color:#1e3a5f; border-left: 4px solid #3b82f6; border-radius:8px; padding:14px 16px; margin-bottom:24px;">
+                    <p style="margin:0; color:#93c5fd; font-size:13px; line-height:1.5;">
+                      ⚠️ <strong>Nunca compartas este código</strong> con nadie. 
+                      CyberGuard jamás te lo pedirá por otro medio.
+                    </p>
+                  </div>
+
+                  <p style="margin:0; color:#64748b; font-size:13px; line-height:1.6;">
+                    Si no solicitaste este código, puedes ignorar este mensaje. 
+                    Tu cuenta permanece segura.
+                  </p>
+                </td>
+              </tr>
+
+              <!-- Footer -->
+              <tr>
+                <td style="background-color:#0f172a; padding: 20px 40px; text-align:center; border-top: 1px solid #1e293b;">
+                  <p style="margin:0; color:#475569; font-size:12px;">
+                    © 2026 CyberGuard · Todos los derechos reservados
+                  </p>
+                  <p style="margin:6px 0 0 0; color:#334155; font-size:11px;">
+                    Este es un correo automático, por favor no respondas a este mensaje.
+                  </p>
+                </td>
+              </tr>
+
+            </table>
+          </td>
+        </tr>
+      </table>
+
+    </body>
+    </html>
+    """
+
     send_mail(
-        subject="Código de verificación",
-        message=f"Tu código de verificación es: {codigo}",
+        subject="Código de verificación — CyberGuard",
+        message=f"Tu código de verificación es: {codigo}",  # fallback texto plano
         from_email=settings.EMAIL_HOST_USER,
         recipient_list=[destinatario],
-        fail_silently=False
+        html_message=html,   # 👈 HTML bonito
+        fail_silently=False,
     )

@@ -19,6 +19,8 @@ from django.contrib.auth.hashers import make_password
 from django.contrib.auth import authenticate, login
 from django.http import JsonResponse
 import json
+from ..services.usuarios.usuario_service import AdminCrearUsuarioSerializer  # 👈 importar
+
 
 @api_view(["GET"])
 def me(request):
@@ -78,6 +80,31 @@ def registro_usuario(request):
             "success": False,
             "message": serializer.errors
         },
+        status=status.HTTP_400_BAD_REQUEST
+    )
+
+@api_view(["POST"])
+def admin_crear_usuario(request):
+    serializer = AdminCrearUsuarioSerializer(data=request.data)
+
+    if serializer.is_valid():
+        usuario = serializer.save()
+        return Response(
+            {
+                "success": True,
+                "result": {
+                    "usuario_id":      str(usuario.usuario_id),
+                    "email":           usuario.email,
+                    "nombre":          usuario.nombre,
+                    "es_administrador": usuario.es_administrador,
+                    "verificado":      usuario.verificado,
+                }
+            },
+            status=status.HTTP_201_CREATED
+        )
+
+    return Response(
+        {"success": False, "message": serializer.errors},
         status=status.HTTP_400_BAD_REQUEST
     )
 
