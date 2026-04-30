@@ -49,6 +49,7 @@ def logout(request):
 
 @api_view(["POST"])
 def registro_usuario(request):
+    print("DATA RECIBIDA:", request.data)
     serializer = RegistroUsuarioSerializer(data=request.data)
 
     if serializer.is_valid():
@@ -74,14 +75,15 @@ def registro_usuario(request):
             },
             status=status.HTTP_201_CREATED
         )
-
-    return Response(
-        {
-            "success": False,
-            "message": serializer.errors
-        },
-        status=status.HTTP_400_BAD_REQUEST
-    )
+    else:
+        print("ERRORES:", serializer.errors)  # 👈 y esto
+        return Response(
+            {
+                "success": False,
+                "message": serializer.errors
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
 @api_view(["POST"])
 def admin_crear_usuario(request):
