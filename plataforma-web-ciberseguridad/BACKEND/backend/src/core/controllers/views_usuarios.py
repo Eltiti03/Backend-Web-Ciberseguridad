@@ -19,7 +19,7 @@ from django.contrib.auth.hashers import make_password
 from django.contrib.auth import authenticate, login
 from django.http import JsonResponse
 import json
-from ..services.usuarios.usuario_service import AdminCrearUsuarioSerializer  # 👈 importar
+from ..services.usuarios.usuario_service import AdminCrearUsuarioSerializer 
 
 
 @api_view(["GET"])

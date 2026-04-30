@@ -13,6 +13,9 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+import os
+
+os.environ["PATH"] += os.pathsep + r"C:\Program Files\Graphviz\bin"
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,7 +25,7 @@ load_dotenv(BASE_DIR / '.env')
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-w$l31=r1=-joivrzumepxb5(sd&drza$y#!hgvbv(b1=awg2c7'
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -48,6 +51,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'src.core',
+
+    'django_extensions',
 ]
 
 MIDDLEWARE = [
@@ -66,7 +71,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5173",
     "http://localhost:8000",
-    os.getenv('FRONTEND_URL', ''), 
+    os.getenv('FRONTEND_URL', 'https://plataforma-web-ciberseguridad.vercel.app/home'),
+
 ]
 CORS_ALLOW_CREDENTIALS = True
 
@@ -139,6 +145,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 STATIC_ROOT = BASE_DIR / 'staticfiles' 
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
