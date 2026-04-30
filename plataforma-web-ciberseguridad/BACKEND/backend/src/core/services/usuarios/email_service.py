@@ -1,21 +1,26 @@
 import resend
 from django.conf import settings
 
-def enviar_codigo_verificacion(destinatario, codigo, tipo='verificacion'):
+def enviar_codigo_verificacion(destinatario, codigo, tipo='VERIFICACION'):
+    print("=== INICIANDO ENVIO DE CORREO ===")
+    print("DESTINATARIO:", destinatario)
+    print("API KEY:", settings.RESEND_API_KEY)
     resend.api_key = settings.RESEND_API_KEY
 
-    if tipo == 'recuperacion':
+    if tipo == 'RECUPERACION':
         subject  = "Recuperación de contraseña — CyberGuard"
         etiqueta = "Recuperación de contraseña"
         titulo   = "Código para restablecer tu contraseña"
         descripcion = "Recibimos una solicitud para restablecer la contraseña de tu cuenta."
         icono    = "🔐"
     else:
-        subject  = "Código de verificación — CyberGuard"
+        subject  = "VERIFICACION"
         etiqueta = "Verificación de identidad"
         titulo   = "Tu código de verificación"
         descripcion = "Usa el siguiente código para completar tu verificación."
         icono    = "🛡️"
+
+
 
     html = f"""
     <!DOCTYPE html>
@@ -71,9 +76,15 @@ def enviar_codigo_verificacion(destinatario, codigo, tipo='verificacion'):
     </html>
     """
 
-    resend.Emails.send({
-        "from": "CyberGuard <onboarding@resend.dev>",  
-        "to": [destinatario],
-        "subject": subject,
-        "html": html,
-    })
+    print("=== ENVIANDO CON RESEND ===")
+    try:
+        resultado = resend.Emails.send({
+            "from": "CyberGuard <onboarding@resend.dev>",
+            "to": [destinatario],
+            "subject": subject,
+            "html": html,
+        })
+        print("=== RESULTADO RESEND ===", resultado)
+    except Exception as e:
+        print("=== ERROR RESEND ===", str(e))
+        raise

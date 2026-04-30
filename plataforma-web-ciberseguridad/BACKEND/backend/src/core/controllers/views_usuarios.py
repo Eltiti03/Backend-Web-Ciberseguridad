@@ -49,42 +49,34 @@ def logout(request):
 
 @api_view(["POST"])
 def registro_usuario(request):
-    print("DATA RECIBIDA:", request.data)
-    serializer = RegistroUsuarioSerializer(data=request.data)
+    try:
+        serializer = RegistroUsuarioSerializer(data=request.data)
 
-    if serializer.is_valid():
-        usuario = serializer.save()
+        if serializer.is_valid():
+            print("ANTES DE SAVE")  # 👈
+            usuario = serializer.save()
+            print("DESPUES DE SAVE")  # 👈
 
-        codigo = generar_codigo_verificacion()
+            try:
+                codigo = generar_codigo_verificacion()
+                Codigo.objects.create(usuario=usuario, content=codigo, tipo="VERIFICACION")
+                enviar_codigo_verificacion(usuario.email, codigo)
+            except Exception as e:
+                print("ERROR CORREO:", str(e))
 
-        Codigo.objects.create(
-            usuario=usuario,
-            content=codigo
-        )
+            return Response(
+                {"success": True, "result": {"usuario_id": str(usuario.usuario_id), "email": usuario.email}},
+                status=status.HTTP_201_CREATED
+            )
 
-        enviar_codigo_verificacion(usuario.email, codigo)
+        return Response({"success": False, "message": serializer.errors}, status=400)
 
-        return Response(
-            {
-                "success": True,
-                "result": {
-                    "message": "Usuario registrado. Verifica tu correo.",
-                    "usuario_id": str(usuario.usuario_id),
-                    "email": usuario.email
-                }
-            },
-            status=status.HTTP_201_CREATED
-        )
-    else:
-        print("ERRORES:", serializer.errors)  # 👈 y esto
-        return Response(
-            {
-                "success": False,
-                "message": serializer.errors
-            },
-            status=status.HTTP_400_BAD_REQUEST
-        )
-
+    except BaseException as e:  # 👈 BaseException captura TODO incluyendo SystemExit
+        print("ERROR BASICO:", type(e).__name__, str(e))
+        import traceback
+        traceback.print_exc()
+        return Response({"success": False, "message": str(e)}, status=500)
+    
 @api_view(["POST"])
 def admin_crear_usuario(request):
     serializer = AdminCrearUsuarioSerializer(data=request.data)
