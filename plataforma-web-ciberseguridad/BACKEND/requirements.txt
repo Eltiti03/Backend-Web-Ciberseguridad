@@ -14,9 +14,12 @@ psycopg2-binary==2.9.11
 pydot==4.0.1
 PyJWT==2.11.0
 pyparsing==3.3.2
+python-dateutil==2.9.0.post0
 python-dotenv==1.2.1
 requests==2.33.1
 resend==2.29.0
+sib-api-v3-sdk==7.6.0
+six==1.17.0
 sqlparse==0.5.5
 typing_extensions==4.15.0
 tzdata==2025.3
