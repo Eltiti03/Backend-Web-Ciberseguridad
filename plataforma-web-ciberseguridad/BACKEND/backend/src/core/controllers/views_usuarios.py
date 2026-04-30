@@ -19,7 +19,9 @@ from django.contrib.auth.hashers import make_password
 from django.contrib.auth import authenticate, login
 from django.http import JsonResponse
 import json
-from ..services.usuarios.usuario_service import AdminCrearUsuarioSerializer 
+from ..services.usuarios.usuario_service import AdminCrearUsuarioSerializer
+from rest_framework.decorators import authentication_classes, permission_classes
+from rest_framework.permissions import AllowAny
 
 
 @api_view(["GET"])
@@ -219,6 +221,8 @@ def solicitar_codigo(request):
     )
 
 @api_view(["POST"])
+@authentication_classes([])   # Sin autenticación
+@permission_classes([AllowAny])
 def login(request):
     usuario, token = login_usuario(request.data)
 

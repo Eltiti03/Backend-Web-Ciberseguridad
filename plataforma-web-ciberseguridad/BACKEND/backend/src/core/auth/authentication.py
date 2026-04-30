@@ -3,7 +3,6 @@ from rest_framework.exceptions import AuthenticationFailed
 from .utils.validar_token import validar_token
 
 class CookieAuthentication(BaseAuthentication):
-
     def authenticate(self, request):
         token = request.COOKIES.get("auth_token")
 
@@ -12,9 +11,7 @@ class CookieAuthentication(BaseAuthentication):
 
         try:
             usuario = validar_token(token)
-            print("USUARIO AUTENTICADO:", usuario)
+            return (usuario, None)
         except Exception as e:
-            print("ERROR EXACTO:", str(e))  # ← agrega esto
-            raise AuthenticationFailed("Token inválido")
-
-        return (usuario, None)
+            print("ERROR EXACTO:", str(e))
+            return None  # ← Era "raise", cámbialo a "return None"
