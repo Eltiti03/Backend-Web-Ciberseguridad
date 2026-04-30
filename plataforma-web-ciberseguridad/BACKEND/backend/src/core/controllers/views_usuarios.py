@@ -246,8 +246,8 @@ def login(request):
         key="auth_token",
         value=token,
         httponly=True,  
-        secure=False,       
-        samesite="Lax",  
+        secure=True,       
+        samesite="None",  
         max_age=60 * 60 * 24 
     )
 
