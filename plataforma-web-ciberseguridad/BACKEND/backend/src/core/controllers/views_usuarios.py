@@ -45,19 +45,17 @@ def me(request):
 
 @api_view(["POST"])
 def logout(request):
-    try:
-        response = Response({"message": "Sesión cerrada"}, status=200)
-        response.delete_cookie(
-            key="auth_token",
-            samesite="None",
-            secure=True,
-        )
-        return response
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return Response({"error": str(e)}, status=500)
-    
+    response = Response({"message": "Sesión cerrada"}, status=200)
+    response.set_cookie(
+        key="auth_token",
+        value="",
+        httponly=True,
+        secure=True,
+        samesite="None",
+        max_age=0,        # ← expira inmediatamente
+    )
+    return response
+
 @api_view(["POST"])
 def registro_usuario(request):
     try:
