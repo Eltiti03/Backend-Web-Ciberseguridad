@@ -156,11 +156,10 @@ def crear_recurso(request):
 def editar_recurso(request, recurso_id):
     try:
         recurso = RecursoEducativo.objects.get(recurso_id=recurso_id)
-    except RecursoEducativo.DoesNotExist:
-        return Response(
-            {"success": False, "message": "Recurso no encontrado"},
-            status=status.HTTP_404_NOT_FOUND
-        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return Response({"error": str(e)}, status=500)
 
     titulo = request.data.get("titulo")
     descripcion = request.data.get("descripcion")
