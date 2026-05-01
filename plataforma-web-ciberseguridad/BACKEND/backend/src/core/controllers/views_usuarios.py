@@ -46,7 +46,11 @@ def me(request):
 @api_view(["POST"])
 def logout(request):
     response = Response({"message": "Sesión cerrada"}, status=200)
-    response.delete_cookie("auth_token", domain="localhost")
+    response.delete_cookie(
+        key="auth_token",
+        samesite="None",
+        secure=True,
+    )
     return response
 
 @api_view(["POST"])
@@ -55,9 +59,8 @@ def registro_usuario(request):
         serializer = RegistroUsuarioSerializer(data=request.data)
 
         if serializer.is_valid():
-            print("ANTES DE SAVE")  # 👈
+
             usuario = serializer.save()
-            print("DESPUES DE SAVE")  # 👈
 
             try:
                 codigo = generar_codigo_verificacion()
@@ -73,7 +76,7 @@ def registro_usuario(request):
 
         return Response({"success": False, "message": serializer.errors}, status=400)
 
-    except BaseException as e:  # 👈 BaseException captura TODO incluyendo SystemExit
+    except BaseException as e:
         print("ERROR BASICO:", type(e).__name__, str(e))
         import traceback
         traceback.print_exc()
