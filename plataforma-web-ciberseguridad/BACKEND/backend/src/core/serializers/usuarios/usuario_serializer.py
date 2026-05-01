@@ -14,10 +14,12 @@ class RegistroUsuarioSerializer(serializers.Serializer):
         default=False
     )
 
+    def validate_email(self, value):           # ← agrega este método
+        if Usuario.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Este correo ya está registrado")
+        return value
+
     def create(self, validated_data):
-
-        print("VALIDATED DATA:", validated_data)
-
         email = validated_data["email"]
         password = validated_data.get("password")
         nombre = validated_data["nombre"]
@@ -28,10 +30,7 @@ class RegistroUsuarioSerializer(serializers.Serializer):
                 {"password": "La contraseña es obligatoria"}
             )
 
-        if Usuario.objects.filter(email=email).exists():
-            raise serializers.ValidationError(
-                {"email": "Este correo ya está registrado"}
-            )
+        # ← elimina el if Usuario.objects.filter(email=email).exists() de aquí
 
         usuario = Usuario.objects.create(
             email=email,
@@ -41,5 +40,3 @@ class RegistroUsuarioSerializer(serializers.Serializer):
         )
 
         return usuario
-    
-    
